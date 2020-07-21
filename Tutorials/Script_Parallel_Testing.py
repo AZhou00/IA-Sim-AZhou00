@@ -1,11 +1,26 @@
 from mpi4py import MPI
-comm = MPI.COMM_WORLD #can pull name, rank, size etc. from this. This object is the barebone basic of MPI
-print('Hi, my rank is:', comm.rank)
-if comm.rank == 1: #if this i the node 1
-    print('doing the task for rank(node) 1')
-elif comm.rank == 0: 
-    print('doing the task for rank(node) 0')
-elif comm.rank == 2:
-    print('doing the task for rank(node) 2')
+import numpy as np
+comm = MPI.COMM_WORLD
+size = comm.Get_size()
+rank = comm.Get_rank()
 
-print('finishing node %i \n\n'%comm.rank)
+if rank == 0:
+    data = np.array([(x+1) for x in range(size)]) #so at least one obj per node
+    #data = np.append(data,[9,9,9,9]) #this wont work, can only scatter # = size for this command
+    print('we will be scattering:',data)
+else:
+    data = None
+
+data_scat = comm.scatter(data,root=0)
+print('rank',rank,'has scattered data = ', data_scat)
+if rank == 0:
+    print('this is rank 0')
+    print('data = ',data)
+    print('data_scat = ',data_scat)
+
+data_scat = data_scat*2
+dataNew = comm.gather(data_scat,root=0)
+if rank == 0:
+    print('this is rank 0, dataNew = ', dataNew)
+print(rank,'check',dataNew)#for other non-0 nodes, this will report None
+print(rank,'check',data_scat)#the nodes still retained the gathered data 
