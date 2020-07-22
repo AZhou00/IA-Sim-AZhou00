@@ -125,9 +125,9 @@ def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,t
     #rs = rs[0:-1]+(rs[0]+rs[1])/2
     #print(rs)
     if save_2D == True:
-        write_file_at_path(outputpath, 'All_Sats_2D smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D,iteration_tracker)
-        write_file_at_path(outputpath, 'All_Sats_2D_eps smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D_eps,iteration_tracker)
-        write_file_at_path(outputpath, 'Gamma_plus smr=%1.2f'%rad_to_deg(phistd), gamma_plus,iteration_tracker)
+        write_file_at_path(outputpath, 'All_Sats_2D', All_Sats_2D,iteration_tracker)
+        write_file_at_path(outputpath, 'All_Sats_2D_eps', All_Sats_2D_eps,iteration_tracker)
+        write_file_at_path(outputpath, 'Gamma_plus', gamma_plus,iteration_tracker)
         print('rank ',rank,': finished saving 2D, 2D_EPS, and Gamma_plus')
 
 def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename):
@@ -140,7 +140,7 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
         
     #read all the file names in the searchpath folder
     filenames = [f for f in os.listdir(searchpath) if os.path.isfile(os.path.join(searchpath, f))]
-    print('rank ',rank,': file names discovered',filenames)
+    print('rank ',rank,': ',len(filenames),' files discovered')
     
     fig= plt.figure(figsize=(9,6))
     #Plotting gamma curves
@@ -154,7 +154,7 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
         #print(smoothed_gamma)
         #print(gammapls_temp)
         #print(len(smoothed_gamma))
-        plt.plot(rs,smoothed_gamma,label=filename)
+        plt.plot(rs,smoothed_gamma)#,label=filename)
     
     #Plotting reference curves
     asymp = np.array([])
@@ -162,10 +162,10 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
     for r in rs:
         asymp = np.append(asymp,(1-(baR_0)**2)/(1+(baR_0)**2))
 
-    plt.plot(rs,y_0,label='y=0')
-    plt.plot(rs,asymp,"--",label=(
-        "asymptotic value %1.3f, b/a_0 = %1.2f" %(
-            float((1-(baR_0)**2)/(1+(baR_0)**2)), baR_0)))
+    plt.plot(rs,y_0)#,label='y=0')
+    plt.plot(rs,asymp,"--")#,label=(
+        #"asymptotic value %1.3f, b/a_0 = %1.2f" %(
+        #    float((1-(baR_0)**2)/(1+(baR_0)**2)), baR_0)))
 
     plt.xlabel('distance')
     plt.ylabel('gamma +')
@@ -179,16 +179,87 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
         os.makedirs(imagesavepath)
     fig.savefig(os.path.join(imagesavepath, imagename), bbox_inches = 'tight')
 
+#The error bar function
+#in each folder of Gamma_plus_some_qualifiers, there are data of multiple runs on the same settinf
+#so first we want to navigate to that folder via search_path, and read all the Gamma_plus_files
+#This is analogous of the ploting functions above
+#This function searches for all the files in a folder. The files should all contain 1-dim np.array. 
+#It applies smoothing first, then
+#It takes the two lines that signifies the 1 and 2 th STD upper&lower bounds
+#and return these 4 lines in one 2-D file that contain both lists.
+
+def Get_Error_Bar(n,smoothing_len,outputpath,searchpath): 
+    #outputpath is where the figure folder is saved
+    #searchpath is where all the gamma_plus data are stored
+    #will save a file, and a plot     
+    #[
+    #[y value of  std 1 upperbound],
+    #[y value of  std 1 lowerbound],
+    #[y value of  std 2 upperbound],
+    #[y value of  std 2 lowerbound],
+    #[smoothed radial coordinate]
+    #]
+
+    rs_presmooth = np.linspace(0, R_cut, n+1) #size = n+1
+    rs_presmooth = rs_presmooth[0:-1]+(rs_presmooth[0]+rs_presmooth[1])/2 #size = n
+    rs = np.array([sum(rs_presmooth[i:i+smoothing_len])/smoothing_len for i in range(0,len(rs_presmooth),smoothing_len)])
+        
+    #read all the file names in the searchpath folder
+    filenames = [f for f in os.listdir(searchpath) if os.path.isfile(os.path.join(searchpath, f))]
+    print('rank ',rank,': ',len(filenames),' files discovered')
+    
+    complete_GamPls = np.empty((0,int(n/smoothing_len)))
+    
+    fig= plt.figure(figsize=(9,6))
+    #get all the gamma data, and smooth them accordingly
+    for filename in filenames:
+        filepath = os.path.join(searchpath, filename)
+        file = open(filepath, "rb")
+        gammapls_temp = np.load(file)
+        file.close
+        
+        smoothed_gamma = [sum(gammapls_temp[i:i+smoothing_len])/smoothing_len for i in range(0,len(gammapls_temp),smoothing_len)]
+        #now sort each column of the matrix and take the standard deviations
+        complete_GamPls = np.vstack((complete_GamPls,smoothed_gamma))
+    
+    complete_GamPls = sort_matrix_columns(complete_GamPls)
+    #print(complete_GamPls)
+    complete_GamPls = get_1_2_std(complete_GamPls)
+    #print(complete_GamPls)
+    complete_GamPls = np.vstack((complete_GamPls,rs))
+    #save in the figures folder
+    write_namedfile_at_path(outputpath, 'figures',complete_GamPls,'STD_With_Radial_Coord_smooth=%i'%smoothing_len)
+    plt.fill_between(rs,complete_GamPls[0],complete_GamPls[1],alpha = 0.2)
+    plt.fill_between(rs,complete_GamPls[2],complete_GamPls[3],alpha = 0.2)
+    #plt.plot(rs,complete_GamPls[0],label='1st STD')
+    #plt.plot(rs,complete_GamPls[1],label='1st STD')
+    #plt.plot(rs,complete_GamPls[2],label='2nd STD')
+    #plt.plot(rs,complete_GamPls[3],label='2nd STD')
+    
+    
+    plt.xlabel('distance')
+    plt.ylabel('gamma +')
+    plt.title('gamma + vs. normalized R, smoothing=%i'%smoothing_len)
+    plt.xlim(0,1)
+    plt.ylim(-1,1)
+    plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
+    plt.show()
+    imagesavepath = os.path.join(outputpath, 'figures')
+    if not os.path.exists(imagesavepath):
+        os.makedirs(imagesavepath)
+    fig.savefig(os.path.join(imagesavepath, 'STD'), bbox_inches = 'tight') 
+
 ###############################################################################################################
 ########                     Execution code happens below                                              ########
 ###############################################################################################################
     
-n=50
+n=128
 R_cut = 1.0
 baR_0 = 0.2
 set_condition(n,R_cut,baR_0)
 sim_step = 10
 offset = 8
+
 def run_rank(node_index,batch_num,offset): #starting accumulate data at filename = offset.
     #batch number  = 0 or 1. This let the 16 threads to run instead of only 8 cores. 
     #The batch number 2 runs the second copy of the sim steps
@@ -204,12 +275,17 @@ def run_rank(node_index,batch_num,offset): #starting accumulate data at filename
             get_RA_data(rank,True,true_index,outputpath,n,R_cut,baR_0,smr,smr)
             print('rank ',rank,': tasks ',index+1,' out of ',sim_step*(batch_num+1),' done')
     
-        searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.2f'%rad_to_deg(smr))
+        searchpath = os.path.join(outputpath,'Gamma_plus')
         smoothing = 2
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
-        smoothing = 5
+        smoothing = 4
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
-
+        
+        if batch_num == 1: #the later batch go get error bar
+            Get_Error_Bar(n,1,outputpath,searchpath)
+            Get_Error_Bar(n,2,outputpath,searchpath)
+            Get_Error_Bar(n,4,outputpath,searchpath)
+            Get_Error_Bar(n,8,outputpath,searchpath)
 #how ever many slot you want to run:
 
 
@@ -220,7 +296,7 @@ run_rank(3,0,offset)
 run_rank(4,0,offset)
 run_rank(5,0,offset)
 run_rank(6,0,offset)
-time.sleep(1) #this gives time for the previous threads to create directories, etcs.
+time.sleep(5) #this gives time for the previous threads to create directories, etcs.
 run_rank(7,1,offset)
 run_rank(8,1,offset)
 run_rank(9,1,offset)
@@ -229,8 +305,6 @@ run_rank(11,1,offset)
 run_rank(12,1,offset)
 run_rank(13,1,offset)
 run_rank(14,1,offset)
-
-
 
 
 #14 threads gets to ~100%cpu
