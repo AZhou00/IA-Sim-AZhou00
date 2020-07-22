@@ -43,7 +43,7 @@ def set_condition(n,R_cut,baR_0):
 ########                               Check for Rank-Dependence before running                        ########
 ###############################################################################################################
 
-def get_RA_data(save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,thetastd): 
+def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,thetastd): 
     #n=50 ~ 6.18 sec without getting All_Sat (best trial)
     #n=100 ~  48.6 sec without getting All_Sat
     #n=200 ~ 7-10 min
@@ -119,20 +119,21 @@ def get_RA_data(save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,thetas
         else: gamma_plus[i]=gamma_plus[i]/count
     
     if save_2D == True:
-        write_file_at_path(outputpath, 'All_Sats_2D smr=%1.3f'%smr, All_Sats_2D,iteration_tracker)
-        write_file_at_path(outputpath, 'All_Sats_2D_eps smr=%1.3f'%smr, All_Sats_2D_eps,iteration_tracker)
-        write_file_at_path(outputpath, 'Gamma_plus smr=%1.3f'%smr, gamma_plus,iteration_tracker)
-        print("finished saving 2D, 2D_EPS, and Gamma_plus")
+        write_file_at_path(outputpath, 'All_Sats_2D smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D,iteration_tracker)
+        write_file_at_path(outputpath, 'All_Sats_2D_eps smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D_eps,iteration_tracker)
+        write_file_at_path(outputpath, 'Gamma_plus smr=%1.2f'%rad_to_deg(phistd), gamma_plus,iteration_tracker)
+        print('rank ',rank,': finished saving 2D, 2D_EPS, and Gamma_plus')
 
-def Plot_Gamma_Plus(n,smoothing_len,baR_0, outputpath,searchpath,imagename):
+def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename):
     #smoothing length (multiples of 2): plotting one datapoint for every smoothing length worth of eps data (taking arithmetic average ), >=2
     #output path is where the figure folder is saved
     #searchpath is where all the gamma_plus data are stored
-    rs = np.linspace(0, R_cut, int(n/smoothing_len))
+    rs_presmooth = np.linspace(0, R_cut, n)
+    rs = np.array([sum(rs_presmooth[i:i+smoothing_len])/smoothing_len for i in range(0,len(rs_presmooth),smoothing_len)])
         
     #read all the file names in the searchpath folder
     filenames = [f for f in os.listdir(searchpath) if os.path.isfile(os.path.join(searchpath, f))]
-    print('file names discovered',filenames)
+    print('rank ',rank,': file names discovered',filenames)
     
     fig= plt.figure(figsize=(9,6))
     #Plotting gamma curves
@@ -161,8 +162,8 @@ def Plot_Gamma_Plus(n,smoothing_len,baR_0, outputpath,searchpath,imagename):
 
     plt.xlabel('distance')
     plt.ylabel('gamma +')
-    plt.title('gamma + vs. normalized distance from cluster center')
-    plt.xlim(0,0.9)
+    plt.title('gamma + vs. normalized distance from cluster center, smoothing=%i'%smoothing_len)
+    plt.xlim(0,1)
     plt.ylim(-1,1)
     plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
     #plt.show()
@@ -175,48 +176,36 @@ def Plot_Gamma_Plus(n,smoothing_len,baR_0, outputpath,searchpath,imagename):
 ########                     Execution code happens below                                              ########
 ###############################################################################################################
 
+
+    
 n=50
 R_cut = 1.0
 baR_0 = 0.2
 set_condition(n,R_cut,baR_0)
+sim_step = 5
 
-sim_step = 6
-
-if rank == 0:
-    for index in range(sim_step):
-        smr=rank*np.pi/8
-        print('rank ',rank,':  on task ',index+1)
-        #smr=(np.pi)/8*index
-        #print(smr)
+def run_rank(node_index):
+    if rank == node_index:
+        smr=(np.pi)/8*(rank)
         outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
-        get_RA_data(True,index,outputpath,n,R_cut,baR_0,smr,smr)
-        print('rank ',rank,': ',index+1,' out of ',sim_step,' done')
+        for index in range(sim_step):
+            print('rank ',rank,': on task ',index+1)
+            get_RA_data(rank,True,index,outputpath,n,R_cut,baR_0,smr,smr)
+            print('rank ',rank,': tasks ',index+1,' out of ',sim_step,' done')
     
-    searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.3f'%smr)
-    Plot_Gamma_Plus(n,2,baR_0,outputpath,searchpath,'Gamma_Plus_baR=2e-1_smearing,smoothing=2')
+        searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.2f'%rad_to_deg(smr))
+        smoothing = 5
+        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
+        smoothing = 2
+        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
+        #Plot_Gamma_Plus(rank,n,smoothing+3,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing+3)
 
-if rank == 1:
-    smr=rank*np.pi/8
-    for index in range(sim_step):
-        print('rank ',rank,':  on task ',index+1)
-        #smr=(np.pi)/8*index
-        #print(smr)
-        outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
-        get_RA_data(True,index,outputpath,n,R_cut,baR_0,smr,smr)
-        print('rank ',rank,': ',index+1,' out of ',sim_step,' done')
-    
-    searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.3f'%smr)
-    Plot_Gamma_Plus(n,2,baR_0,outputpath,searchpath,'Gamma_Plus_baR=2e-1_smearing,smoothing=2')
-
-if rank == 2:
-    smr=rank*np.pi/8
-    for index in range(sim_step):
-        print('rank ',rank,':  on task ',index+1)
-        #smr=(np.pi)/8*index
-        #print(smr)
-        outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
-        get_RA_data(True,index,outputpath,n,R_cut,baR_0,smr,smr)
-        print('rank ',rank,': ',index+1,' out of ',sim_step,' done')
-    
-    searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.3f'%smr)
-    Plot_Gamma_Plus(n,2,baR_0,outputpath,searchpath,'Gamma_Plus_baR=2e-1_smearing,smoothing=2')
+#how ever many slot you want to run:
+run_rank(0)
+run_rank(1)
+run_rank(2)
+run_rank(3)
+run_rank(4)
+run_rank(5)
+run_rank(6)
+run_rank(7)
