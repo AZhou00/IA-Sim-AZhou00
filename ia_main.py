@@ -102,10 +102,10 @@ def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,t
                                                                         sum_temp[2]
                                                                         ]]),axis=0)
     #Now perform radial averaging and get the gamma+ function
-    n_radial = int(n)
-    rs = np.linspace(0, R_cut, n_radial)
-    gamma_plus = np.zeros(rs.shape)
-    for i in range(len(rs)):
+    n_radial = int(n+1) #partition the radial direction  into n intervals = n+1 points 
+    rs = np.linspace(0, R_cut, n_radial)#size=n+1, will discard the last data point
+    gamma_plus = np.zeros(n)#size=n
+    for i in range(len(rs)-1): #there is nothing beyond R_cut
         count=0
         for elmt in All_Sats_2D_eps:
             # if in the radial interval of 0 and 0.001(lets say e.g.).., and so on
@@ -117,7 +117,12 @@ def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,t
             #print(gamma_plus[i])
             gamma_plus[i]=0
         else: gamma_plus[i]=gamma_plus[i]/count
-    
+    rs = rs[0:-1]+(rs[0]+rs[1])/2 #so that the corresponding computed gamma_plus is at the center for each radial direction interval. Discard the last interval
+    #rint(len(rs),len(gamma_plus))
+    #rs=np.linspace(0, 1, 11)
+    #print(rs)
+    #rs = rs[0:-1]+(rs[0]+rs[1])/2
+    #print(rs)
     if save_2D == True:
         write_file_at_path(outputpath, 'All_Sats_2D smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D,iteration_tracker)
         write_file_at_path(outputpath, 'All_Sats_2D_eps smr=%1.2f'%rad_to_deg(phistd), All_Sats_2D_eps,iteration_tracker)
@@ -128,7 +133,8 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
     #smoothing length (multiples of 2): plotting one datapoint for every smoothing length worth of eps data (taking arithmetic average ), >=2
     #output path is where the figure folder is saved
     #searchpath is where all the gamma_plus data are stored
-    rs_presmooth = np.linspace(0, R_cut, n)
+    rs_presmooth = np.linspace(0, R_cut, n+1) #size = n+1
+    rs_presmooth = rs_presmooth[0:-1]+(rs_presmooth[0]+rs_presmooth[1])/2 #size = n
     rs = np.array([sum(rs_presmooth[i:i+smoothing_len])/smoothing_len for i in range(0,len(rs_presmooth),smoothing_len)])
         
     #read all the file names in the searchpath folder
@@ -175,14 +181,12 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
 ###############################################################################################################
 ########                     Execution code happens below                                              ########
 ###############################################################################################################
-
-
     
 n=50
 R_cut = 1.0
 baR_0 = 0.2
 set_condition(n,R_cut,baR_0)
-sim_step = 5
+sim_step = 30
 
 def run_rank(node_index):
     if rank == node_index:
@@ -194,9 +198,9 @@ def run_rank(node_index):
             print('rank ',rank,': tasks ',index+1,' out of ',sim_step,' done')
     
         searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.2f'%rad_to_deg(smr))
-        smoothing = 5
+        smoothing = 1
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
-        smoothing = 2
+        smoothing = 1
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
         #Plot_Gamma_Plus(rank,n,smoothing+3,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing+3)
 
