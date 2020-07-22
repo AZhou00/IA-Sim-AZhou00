@@ -4,6 +4,7 @@ rank = comm.rank
 size = comm.size
 import sys
 import os
+import time
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -186,30 +187,53 @@ n=50
 R_cut = 1.0
 baR_0 = 0.2
 set_condition(n,R_cut,baR_0)
-sim_step = 30
-
-def run_rank(node_index):
+sim_step = 10
+offset = 8
+def run_rank(node_index,batch_num,offset): #starting accumulate data at filename = offset.
+    #batch number  = 0 or 1. This let the 16 threads to run instead of only 8 cores. 
+    #The batch number 2 runs the second copy of the sim steps
     if rank == node_index:
-        smr=(np.pi)/8*(rank)
+        smr=(np.pi)/8*(rank-size*batch_num/2)
         outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
-        for index in range(sim_step):
+        index_list = np.array(list(range(sim_step)))+(batch_num*sim_step)
+        index_list = index_list.astype(int)
+        
+        for index in index_list:
             print('rank ',rank,': on task ',index+1)
-            get_RA_data(rank,True,index,outputpath,n,R_cut,baR_0,smr,smr)
-            print('rank ',rank,': tasks ',index+1,' out of ',sim_step,' done')
+            true_index = index+offset
+            get_RA_data(rank,True,true_index,outputpath,n,R_cut,baR_0,smr,smr)
+            print('rank ',rank,': tasks ',index+1,' out of ',sim_step*(batch_num+1),' done')
     
         searchpath = os.path.join(outputpath,'Gamma_plus smr=%1.2f'%rad_to_deg(smr))
-        smoothing = 1
+        smoothing = 2
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
-        smoothing = 1
+        smoothing = 5
         Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
-        #Plot_Gamma_Plus(rank,n,smoothing+3,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing+3)
 
 #how ever many slot you want to run:
-run_rank(0)
-run_rank(1)
-run_rank(2)
-run_rank(3)
-run_rank(4)
-run_rank(5)
-run_rank(6)
-run_rank(7)
+
+
+run_rank(0,0,offset)
+run_rank(1,0,offset)
+run_rank(2,0,offset)
+run_rank(3,0,offset)
+run_rank(4,0,offset)
+run_rank(5,0,offset)
+run_rank(6,0,offset)
+time.sleep(1) #this gives time for the previous threads to create directories, etcs.
+run_rank(7,1,offset)
+run_rank(8,1,offset)
+run_rank(9,1,offset)
+run_rank(10,1,offset)
+run_rank(11,1,offset)
+run_rank(12,1,offset)
+run_rank(13,1,offset)
+run_rank(14,1,offset)
+
+
+
+
+#14 threads gets to ~100%cpu
+#n=50 is about 0.9sec/single_run including graphing
+#8 cores ~60%cpu
+#n=50 is about 1.23sec/single_run including graphing
