@@ -130,7 +130,7 @@ def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,t
         write_file_at_path(outputpath, 'Gamma_plus', gamma_plus,iteration_tracker)
         print('rank ',rank,': finished saving 2D, 2D_EPS, and Gamma_plus')
 
-def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename):
+def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath):
     #smoothing length (multiples of 2): plotting one datapoint for every smoothing length worth of eps data (taking arithmetic average ), >=2
     #output path is where the figure folder is saved
     #searchpath is where all the gamma_plus data are stored
@@ -161,24 +161,28 @@ def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath,imagename)
     y_0 = np.zeros(rs.shape)
     for r in rs:
         asymp = np.append(asymp,(1-(baR_0)**2)/(1+(baR_0)**2))
-
     plt.plot(rs,y_0)#,label='y=0')
     plt.plot(rs,asymp,"--")#,label=(
         #"asymptotic value %1.3f, b/a_0 = %1.2f" %(
         #    float((1-(baR_0)**2)/(1+(baR_0)**2)), baR_0)))
-
+    
+    if PLOT_LOG_FLAG == True: plt.xscale('log')
     plt.xlabel('distance')
     plt.ylabel('gamma +')
     plt.title('gamma + vs. normalized distance from cluster center, smoothing=%i'%smoothing_len)
-    plt.xlim(0,1)
+    if PLOT_LOG_FLAG == True: 
+        plt.xlim(rs[0],1)
+    else: plt.xlim(0,1)
     plt.ylim(-1,1)
-    plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
+    #plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
     #plt.show()
     imagesavepath = os.path.join(outputpath, 'figures')
     if not os.path.exists(imagesavepath):
         os.makedirs(imagesavepath)
-    fig.savefig(os.path.join(imagesavepath, imagename), bbox_inches = 'tight')
-
+    if PLOT_LOG_FLAG == True:
+        fig.savefig(os.path.join(imagesavepath, 'GammaPlus LOG smoothing = %i'%smoothing_len), bbox_inches = 'tight')
+    else: fig.savefig(os.path.join(imagesavepath, 'GammaPlus smoothing = %i'%smoothing_len), bbox_inches = 'tight')
+    
 #The error bar function
 #in each folder of Gamma_plus_some_qualifiers, there are data of multiple runs on the same settinf
 #so first we want to navigate to that folder via search_path, and read all the Gamma_plus_files
@@ -210,7 +214,7 @@ def Get_Error_Bar(n,smoothing_len,outputpath,searchpath):
     
     complete_GamPls = np.empty((0,int(n/smoothing_len)))
     
-    fig= plt.figure(figsize=(9,6))
+   
     #get all the gamma data, and smooth them accordingly
     for filename in filenames:
         filepath = os.path.join(searchpath, filename)
@@ -222,43 +226,103 @@ def Get_Error_Bar(n,smoothing_len,outputpath,searchpath):
         #now sort each column of the matrix and take the standard deviations
         complete_GamPls = np.vstack((complete_GamPls,smoothed_gamma))
     
-    complete_GamPls = sort_matrix_columns(complete_GamPls)
+    error_GamPls = sort_matrix_columns(complete_GamPls)
     #print(complete_GamPls)
-    complete_GamPls = get_1_2_std(complete_GamPls)
+    error_GamPls = get_1_2_std(error_GamPls)
     #print(complete_GamPls)
-    complete_GamPls = np.vstack((complete_GamPls,rs))
+    error_GamPls = np.vstack((error_GamPls,rs)) #attach the smoothed x coordinate
     #save in the figures folder
-    write_namedfile_at_path(outputpath, 'figures',complete_GamPls,'STD_With_Radial_Coord_smooth=%i'%smoothing_len)
-    plt.fill_between(rs,complete_GamPls[0],complete_GamPls[1],alpha = 0.2)
-    plt.fill_between(rs,complete_GamPls[2],complete_GamPls[3],alpha = 0.2)
+    write_namedfile_at_path(outputpath, 'figures',error_GamPls,'STD_With_Radial_Coord_smooth=%i'%smoothing_len)
+    
+    
+    ### NOW PLOT OVERLAYED SCATTER PLOT + STD ###
+    #############################################
+    fig = plt.figure(figsize=(9,6))
+    for gam in complete_GamPls:
+        plt.scatter(rs,gam,c='r',s=0.25,marker='o')
+    
+    plt.fill_between(rs,error_GamPls[2],error_GamPls[3],alpha = 0.4,label='2nd STD')    
+    plt.fill_between(rs,error_GamPls[0],error_GamPls[1],alpha = 0.4,label='1st STD')
+
     #plt.plot(rs,complete_GamPls[0],label='1st STD')
     #plt.plot(rs,complete_GamPls[1],label='1st STD')
     #plt.plot(rs,complete_GamPls[2],label='2nd STD')
     #plt.plot(rs,complete_GamPls[3],label='2nd STD')
     
+    #Plotting reference curves
+    asymp = np.array([])
+    y_0 = np.zeros(rs.shape)
+    for r in rs:
+        asymp = np.append(asymp,(1-(baR_0)**2)/(1+(baR_0)**2))
+
+    plt.plot(rs,y_0,label='y=0')
+    plt.plot(rs,asymp,"--",label=(
+        "asymptotic value %1.3f, b/a_0 = %1.2f" %(
+            float((1-(baR_0)**2)/(1+(baR_0)**2)), baR_0)))
     
+    if PLOT_LOG_FLAG == True: plt.xscale('log')         
     plt.xlabel('distance')
     plt.ylabel('gamma +')
     plt.title('gamma + vs. normalized R, smoothing=%i'%smoothing_len)
-    plt.xlim(0,1)
+    if PLOT_LOG_FLAG == True: 
+        plt.xlim(rs[0],1)
+    else: plt.xlim(0,1)
     plt.ylim(-1,1)
     plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
-    plt.show()
+    #plt.show()
     imagesavepath = os.path.join(outputpath, 'figures')
     if not os.path.exists(imagesavepath):
         os.makedirs(imagesavepath)
-    fig.savefig(os.path.join(imagesavepath, 'STD'), bbox_inches = 'tight') 
+    if PLOT_LOG_FLAG == True: 
+        fig.savefig(os.path.join(imagesavepath, 'OVERLAY LOG smoothing = %i'%smoothing_len), bbox_inches = 'tight')  
+    else: fig.savefig(os.path.join(imagesavepath, 'OVERLAY smoothing = %i'%smoothing_len), bbox_inches = 'tight')       
+    
+    
+    ######  NOW PLOT JUST STD ########
+    ##################################
+    fig2 = plt.figure(figsize=(9,6))
+    plt.fill_between(rs,error_GamPls[2],error_GamPls[3],alpha = 0.4,label='2nd STD')    
+    plt.fill_between(rs,error_GamPls[0],error_GamPls[1],alpha = 0.4,label='1st STD')
 
+    #plt.plot(rs,complete_GamPls[0],label='1st STD')
+    #plt.plot(rs,complete_GamPls[1],label='1st STD')
+    #plt.plot(rs,complete_GamPls[2],label='2nd STD')
+    #plt.plot(rs,complete_GamPls[3],label='2nd STD')
+    
+    #Plotting reference curves
+    plt.plot(rs,y_0,label='y=0')
+    plt.plot(rs,asymp,"--",label=(
+        "asymptotic value %1.3f, b/a_0 = %1.2f" %(
+            float((1-(baR_0)**2)/(1+(baR_0)**2)), baR_0)))
+    
+    if PLOT_LOG_FLAG == True: plt.xscale('log')         
+    plt.xlabel('distance')
+    plt.ylabel('gamma +')
+    plt.title('gamma + vs. normalized R, smoothing=%i'%smoothing_len)
+    if PLOT_LOG_FLAG == True: 
+        plt.xlim(rs[0],1)
+    else: plt.xlim(0,1)
+    plt.ylim(-1,1)
+    plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
+    #plt.show()
+    imagesavepath = os.path.join(outputpath, 'figures')
+    if not os.path.exists(imagesavepath):
+        os.makedirs(imagesavepath)
+    if PLOT_LOG_FLAG == True: 
+        fig2.savefig(os.path.join(imagesavepath, 'STD LOG smoothing = %i'%smoothing_len), bbox_inches = 'tight')  
+    else: fig2.savefig(os.path.join(imagesavepath, 'STD smoothing = %i'%smoothing_len), bbox_inches = 'tight')       
+    
 ###############################################################################################################
 ########                     Execution code happens below                                              ########
 ###############################################################################################################
     
-n=128
+n=256
 R_cut = 1.0
 baR_0 = 0.2
 set_condition(n,R_cut,baR_0)
-sim_step = 10
-offset = 8
+sim_step = 25
+offset = 0
+PLOT_LOG_FLAG = True
 
 def run_rank(node_index,batch_num,offset): #starting accumulate data at filename = offset.
     #batch number  = 0 or 1. This let the 16 threads to run instead of only 8 cores. 
@@ -266,6 +330,8 @@ def run_rank(node_index,batch_num,offset): #starting accumulate data at filename
     if rank == node_index:
         smr=(np.pi)/8*(rank-size*batch_num/2)
         outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
+        searchpath = os.path.join(outputpath,'Gamma_plus')
+        
         index_list = np.array(list(range(sim_step)))+(batch_num*sim_step)
         index_list = index_list.astype(int)
         
@@ -275,20 +341,34 @@ def run_rank(node_index,batch_num,offset): #starting accumulate data at filename
             get_RA_data(rank,True,true_index,outputpath,n,R_cut,baR_0,smr,smr)
             print('rank ',rank,': tasks ',index+1,' out of ',sim_step*(batch_num+1),' done')
     
-        searchpath = os.path.join(outputpath,'Gamma_plus')
         smoothing = 2
-        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
+        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath)
         smoothing = 4
-        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath,'GammaPlus_Smoothing=%i'%smoothing)
+        Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath)
         
         if batch_num == 1: #the later batch go get error bar
-            Get_Error_Bar(n,1,outputpath,searchpath)
+            #Get_Error_Bar(n,1,outputpath,searchpath)
             Get_Error_Bar(n,2,outputpath,searchpath)
             Get_Error_Bar(n,4,outputpath,searchpath)
+            #Get_Error_Bar(n,8,outputpath,searchpath)
+
+def run_rank_plots(node_index,batch_num): 
+    if rank == node_index:
+        if batch_num == 0:
+            
+            smr=(np.pi)/8*(rank-size*batch_num/2)
+            outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/n%i-baR_0%1.1f-phiSTD%1.2f-thetaSTD%1.2f' %(n,baR_0,rad_to_deg(smr),rad_to_deg(smr))
+            searchpath = os.path.join(outputpath,'Gamma_plus')
+            
+            smoothing = 2
+            Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath)
+            Get_Error_Bar(n,4,outputpath,searchpath)
+            smoothing = 4
+            Plot_Gamma_Plus(rank,n,smoothing,baR_0,outputpath,searchpath)
             Get_Error_Bar(n,8,outputpath,searchpath)
+            #Get_Error_Bar(n,8,outputpath,searchpath)
+"""            
 #how ever many slot you want to run:
-
-
 run_rank(0,0,offset)
 run_rank(1,0,offset)
 run_rank(2,0,offset)
@@ -304,9 +384,15 @@ run_rank(10,1,offset)
 run_rank(11,1,offset)
 run_rank(12,1,offset)
 run_rank(13,1,offset)
-run_rank(14,1,offset)
+run_rank(14,1,offset)"""
 
-
+run_rank_plots(0,0)
+run_rank_plots(1,0)
+run_rank_plots(2,0)
+run_rank_plots(3,0)
+run_rank_plots(4,0)
+run_rank_plots(5,0)
+run_rank_plots(6,0)
 #14 threads gets to ~100%cpu
 #n=50 is about 0.9sec/single_run including graphing
 #8 cores ~60%cpu

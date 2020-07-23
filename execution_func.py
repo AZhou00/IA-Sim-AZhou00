@@ -1,4 +1,5 @@
 def write_file_at_path(path_output, decorated_name, object_name,iteration_tracker):
+    #write file at path/decoratedname/iteration_tracker.format
     import numpy as np
     import os
     #write 'numpy'object_name to file using interation_number as name in path_output/decorated_name/
@@ -13,6 +14,7 @@ def write_file_at_path(path_output, decorated_name, object_name,iteration_tracke
     file.close
 
 def write_namedfile_at_path(path_output, decorated_name, object_name,name):
+    #write file at path/decoratedname/name.format
     import numpy as np
     import os
     #write 'numpy'object_name to file using interation_number as name in path_output/decorated_name/
