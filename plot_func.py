@@ -88,7 +88,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.grid(b=True,which='both')
         plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -121,7 +121,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.grid(b=True,which='both')
         plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -149,7 +149,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.grid(b=True,which='both')
         plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -174,7 +174,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.grid(b=True,which='both')
         plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -293,7 +293,7 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.grid(b=True,which='both')
         plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -332,7 +332,7 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.grid(b=True,which='both')
         plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -359,7 +359,7 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.grid(b=True,which='both')
         plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
@@ -383,7 +383,7 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.grid(b=True,which='both')
         plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
-        plt.ylim(-1,1)
+        plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):

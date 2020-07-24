@@ -12,6 +12,10 @@ def Cart_to_Sph(xyz): #input np array [[x,y,z]], output[[r,theta,phi]]
 #[[r,theta,phi]] = Cart_to_Sph(np.array([[1,1,1]]))
 #print(r)#print(theta)#print(phi)
 
+def RZ_to_Theta(xyz): #input np array [[r,z]], output theta
+    import numpy as np
+    return np.arctan2(xyz[:,0], xyz[:,1])[0] # for elevation angle defined from Z-axis down
+
 def Cart_to_Polar(xy): #input np array [[x,y]], output[[r,phi]]
     import numpy as np
     ptsnew = np.zeros(xy.shape)
@@ -59,6 +63,11 @@ def Cart_to_eps(sat_state):
     #temp_mag = Cart_to_Polar(sat_state_orient)[:,0][0]
     #temp_satangle = Cart_to_Polar(sat_state_orient)[:,1][0]
     return (1-temp_mag**2)/(1+temp_mag**2)*np.cos(2*(temp_satangle-temp_posangle))
+
+def Polar_to_eps(sat_location_phi,sat_orient_r,sat_orient_phi): 
+    #input is a length !!!3!!! np.array[sat_location_phi,sat_orient_r,sat_orient_phi], output eps+
+    import numpy as np
+    return (1-sat_orient_r**2)/(1+sat_orient_r**2)*np.cos(2*(sat_location_phi-sat_orient_phi))
 
 def rad_to_deg(rad):
     import numpy as np
