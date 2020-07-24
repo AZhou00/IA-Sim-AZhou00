@@ -16,6 +16,10 @@ def get_mid_points(ls):
     import numpy as np
     return np.array([(ls[i]+ls[i+1])/2 for i in range(0,len(ls)-1,1)])
 
+def get_diff_list(ls):
+    import numpy as np
+    return [ls[i+1]-ls[i] for i in range(len(ls)-1)]
+
 def read_file_from_name(path,filename):
     import os
     import numpy as np
