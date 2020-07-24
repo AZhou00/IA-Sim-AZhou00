@@ -1,32 +1,81 @@
-def write_file_at_path(path_output, decorated_name, object_name,iteration_tracker):
-    #write file at path/decoratedname/iteration_tracker.format
+def get_axis_lin(n):
+    #this gives a sorted (ascending) linear partition from -1 to 1, in a list of 2n+1 elmts
+    #0 always in the list, this prevent computing singular values
     import numpy as np
-    import os
-    #write 'numpy'object_name to file using interation_number as name in path_output/decorated_name/
-    fullpath = os.path.join(path_output, decorated_name)
-    if not os.path.exists(fullpath):
-        os.makedirs(fullpath)
-        print('made path', fullpath)
-    filename = str(iteration_tracker)
-    filename = os.path.join(fullpath, filename)
-    file = open(filename, "wb")
-    np.save(file, object_name)
-    file.close
+    return np.linspace(-1,1,n*2+1)
 
-def write_namedfile_at_path(path_output, decorated_name, object_name,name):
-    #write file at path/decoratedname/name.format
+def get_axis_log(n):
+    #this gives a sorted (ascending) log partition from -1 to 1, in a list of 2n+1 elmts
+    #0 always in the list, this prevent computing singular values
+    import numpy as np
+    log_axis = np.append(np.logspace(-2,0,n),-1*np.logspace(-2,0,n))
+    log_axis = np.append(log_axis,0)
+    return np.sort(log_axis)
+
+def get_mid_points(ls):
+    import numpy as np
+    return np.array([(ls[i]+ls[i+1])/2 for i in range(0,len(ls)-1,1)])
+
+def read_file_from_name(path,filename):
+    import os
+    import numpy as np
+    filepath = os.path.join(path, filename)
+    file = open(filepath, "rb")
+    var = np.load(file)
+    file.close
+    return var
+#syntax a = read_file_from_name(path,filename)
+
+def write_file_at_path(path_output, decorated_name, object_name,filename):
+    ##write 'numpy'object_name to file as path_output/decorated_name/iteration_tracker.format
+    ##if decorated_name = 'NA', no subfolder will be created, saving directly to path_output
     import numpy as np
     import os
-    #write 'numpy'object_name to file using interation_number as name in path_output/decorated_name/
-    fullpath = os.path.join(path_output, decorated_name)
-    if not os.path.exists(fullpath):
-        os.makedirs(fullpath)
-        print('made path', fullpath)
-    filename = name
-    filename = os.path.join(fullpath, filename)
-    file = open(filename, "wb")
-    np.save(file, object_name)
-    file.close
+    if decorated_name != 'NA':
+        fullpath = os.path.join(path_output, decorated_name)
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
+            print('made path', fullpath)
+        filename = os.path.join(fullpath, filename)
+        file = open(filename, "wb")
+        np.save(file, object_name)
+        file.close
+    if decorated_name == 'NA':
+        fullpath = path_output
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)
+            print('made path', fullpath)
+        filename = os.path.join(fullpath, filename)
+        file = open(filename, "wb")
+        np.save(file, object_name)
+        file.close
+
+#deprecated. If want to use iteration as file name, just do str(iteration_tracker)
+#def write_namedfile_at_path(path_output, decorated_name, object_name,name):
+#    #write 'numpy' object_name to file as path_output/decorated_name/name.format
+#    ##if decorated_name = 'NA', no subfolder will be created, saving directly to path_output
+#    import numpy as np
+#    import os
+#    if decorated_name != 'NA':
+#        fullpath = os.path.join(path_output, decorated_name)
+#        if not os.path.exists(fullpath):
+#            os.makedirs(fullpath)
+#            print('made path', fullpath)
+#        filename = name
+#        filename = os.path.join(fullpath, filename)
+#        file = open(filename, "wb")
+#        np.save(file, object_name)
+#        file.close
+#    if decorated_name == 'NA':
+#        fullpath = path_output
+#        if not os.path.exists(fullpath):
+#            os.makedirs(fullpath)
+#            print('made path', fullpath)
+#        filename = name
+#        filename = os.path.join(fullpath, filename)
+#        file = open(filename, "wb")
+#        np.save(file, object_name)
+#        file.close
 
 def sort_matrix_columns(matrix):
     #smallest entries on top

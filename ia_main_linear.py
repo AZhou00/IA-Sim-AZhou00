@@ -17,13 +17,13 @@ from execution_func import *
 ########                     Scroll to the end of file to code executions                              ########
 ########                     Check for Rank-Dependence before running                                  ########
 ###############################################################################################################
-#
-#def baR_func(x,y,z,global_r,global_theta,global_phi): 
-#    return baR_0
+
+def baR_func(x,y,z,global_r,global_theta,global_phi): 
+    return baR_0
 
 def theta_func(x,y,z,global_r,global_theta,global_phi,std): 
     #### GAUSSIAN NOISE
-    return global_theta+np.random.normal(0,std) #(center, std)
+    return global_theta+np.random.normal(0,std) #center, std = pi/4 = 0.7853981633974483
 
 def phi_func(x,y,z,global_r,global_theta,global_phi,std): 
     #### GAUSSIAN NOISE
@@ -33,136 +33,104 @@ def density_func(x,y,z,global_r,global_theta,global_phi): #NEED TO BE NORMALIZED
     # this gives the Fraction NUMBER of gals expected in a box of size dV, approximated at (x,y,z)
     # should normalize to 1, but given the finiteness of n,  this only holds as n gets large
     if (x**2+y**2+z**2 > R_cut**2): return 0
-    else: return 1/(4*np.pi/3)
+    else: return dV/(4*np.pi/3)
+
+def set_condition(n,R_cut,baR_0):
+    global dV 
+    dV = (2*R_cut)**3/n**3
 
 ###############################################################################################################
 ########                     This block contains the core functions for this simulation                ########
 ########                               Check for Rank-Dependence before running                        ########
 ###############################################################################################################
 
-def get_RA_data(save_2D,iteration_tracker,outputpath,mode,n,baR_0,phistd,thetastd): 
-    
-    import sys
-    #x,y,z are of size 2n+1, {+1,-1, and 0 always included to prevent singularities in functions}
-    if mode == 'linear':
-        xs = get_axis_lin(n)
-        ys = get_axis_lin(n)
-        zs = get_axis_lin(n)
-    if mode == 'linear_cut': #To be implemented
-        xs = None
-        ys = None
-        zs = None
-        sys.exit('code not ready')
-    if mode == 'log':
-        xs = get_axis_log(n)
-        ys = get_axis_log(n)
-        zs = get_axis_log(n)
-        
-    #this prevents the density function later used become to small for numeric purposes
-    #this will get divided out later. doesnt really matter
-    total_number_of_sats = (2*n)**3
-    
-    #[[x_cell_midpt, y_cell_midpt, eps+(midpt), numberfraction(midpt),average_xlocal(midpt), average_ylocal(midpt) ]]
-    #This will be saved in file
-    Proj_Data=np.empty((0,6))  
-    
-    for x_index in range(2*n):
-        for y_index in range(2*n):
-            weighted_orients_same_xy = np.empty((0,3)) 
-            # this stores [[localx*num,localy*num,total_number_fraction],...] with the same dim1,dim2 coord
-            for z_index in range(2*n):
-                #midpoint_cell_coordinate will be referred to as = x,y,z.
-                #looping in range2*n ensures never out of bound
-                x =(xs[x_index]+xs[x_index+1])/2
-                y =(ys[y_index]+ys[y_index+1])/2
-                z =(zs[z_index]+zs[z_index+1])/2
-                dV=(xs[x_index+1]-xs[x_index])(ys[y_index+1]-ys[y_index])(zs[z_index+1]-zs[z_index])
-                
-                #global here refers to global coordinates
-                #local meanning local to the cell, evaluated at cell midpt
+def get_RA_data(rank,save_2D,iteration_tracker,outputpath,n,R_cut,baR_0,phistd,thetastd): 
+    #n=50 ~ 6.18 sec without getting All_Sat (best trial)
+    #n=100 ~  48.6 sec without getting All_Sat
+    #n=200 ~ 7-10 min
+
+    xs = np.linspace(- R_cut, R_cut, n)
+    ys = np.linspace(- R_cut, R_cut, n)
+    zs = np.linspace(- R_cut, R_cut, n)
+
+    #All_Sats=np.empty((0,7)) #[[x,y,z,xlocal,ylocal,zlocal,numberfraction]]
+    All_Sats_2D=np.empty((0,5))  #[[x,y,average_xlocal, average_ylocal,numberfraction]]
+    All_Sats_2D_eps=np.empty((0,4))  #[[x,y,eps+,numberfraction]]
+    for x in xs:
+        #print(x)
+        for y in ys:
+            temp_baR_num = np.empty((0,3)) 
+            # this stores the data point with the same x,y but different z coord, and store [[localx*num,localy*num,num(i.e. frac density)],...]
+            for z in zs:
                 [[global_r,global_theta,global_phi]] = Cart_to_Sph(np.array([[x,y,z]]))   #get sat's position in global sph coord
-                
-                #each function will decide if (xyz) or (r,theta, phi) is faster
-                #other parameters are defined globally before this function is run
-                local_num_fraction = density_func(x,y,z,global_r,global_theta,global_phi)*dV*total_number_of_sats    #density * volume
-                local_baR          = baR_func(x,y,z,global_r,global_theta,global_phi)
-                local_theta        = theta_func(x,y,z,global_r,global_theta,global_phi,thetastd)
-                local_phi          = phi_func(x,y,z,global_r,global_theta,global_phi,phistd)
-                
-                #get sat's orientation (see nnote below!!!) in local sph and cartesian coord. #not very useful, deactivated.
-                #But IMPORTANT to note that
-                #This vector IS NOT WHAT SATELLITEs PHYSICALLY LOOKLIKE. R direction encodes b/a Ratio. 
-                #But this vector physically parallels the satellite's shape
-                #local_baR_vector = np.array([[local_baR,local_theta,local_phi]]) 
-                #[[local_x,local_y,local_z]] = Sph_to_Cart(local_baR_vector)
+
+                local_density = density_func(x,y,z,global_r,global_theta,global_phi)
+                local_baR = baR_func(x,y,z,global_r,global_theta,global_phi)
+                local_theta = theta_func(x,y,z,global_r,global_theta,global_phi,thetastd)
+                local_phi = phi_func(x,y,z,global_r,global_theta,global_phi,phistd)
+
+                local_baR_vector = np.array([[local_baR,local_theta,local_phi]]) #get sat's orientation in local sph coord
+                [[local_x,local_y,local_z]] = Sph_to_Cart(local_baR_vector) #get sat's orientation in local Cart coord
+
+                #build 3D catalogue
+    #            All_Sats = np.append(All_Sats,[[x, #sat's location
+    #                                            y,  #sat's location
+    #                                            z,  #sat's location
+    #                                            local_x,  #sat's baR mag and orient
+    #                                            local_y,  #sat's baR mag and orient
+    #                                            local_z,  #sat's baR mag and orient
+    #                                            local_density #approximated frac of sats in dV around (x,y,z)
+    #                                            ]],axis=0)
 
                 #build 2D projected catalogue with average baR
                 proj_mag = Ellip_proj_mag(local_baR,local_theta)    #calculate the projected b/a Ratio first
                 [[proj_local_x, proj_local_y]]=Polar_to_Cart(np.array([[proj_mag,local_phi]]))    #convert the projected vector to cartesian
 
-                weighted_orients_same_xy = np.append(weighted_orients_same_xy,[[proj_local_x*local_num_fraction,proj_local_y*local_num_fraction,local_num_fraction]],axis=0)
+                temp_baR_num = np.append(temp_baR_num,[[proj_local_x*local_density,proj_local_y*local_density,local_density]],axis=0)
 
-            #compute the average baR vector. add all orient vectors of the same x,y coord element-wise
-            sum_temp = np.sum(weighted_orients_same_xy,axis=0)
+            #compute the average baR vector
+            sum_temp = np.sum(temp_baR_num,axis=0)
 
             if (np.abs(sum_temp[2])) >= 10.**(-13):# if the density is 0, can just set the mean vector to 0, this also avoids 0 division
                 [mean_temp_x,mean_temp_y] = sum_temp[0:2]/sum_temp[2]
-                sum_temp[2]=sum_temp[2]/total_number_of_sats #this gets rid of the run-dependent factor that helped with the previous calculations
-                
-                #Deprecated! All_Sats_2D = np.append(All_Sats_2D,[[x,y,mean_temp_x,mean_temp_y,sum_temp[2]]],axis=0)
-                
-                #from the average baR vector, compute the expected gamma+ value at (x,y)
-                Proj_Data = np.append(All_Sats_2D_eps,np.array([[
+                All_Sats_2D = np.append(All_Sats_2D,[[x,y,mean_temp_x,mean_temp_y,sum_temp[2]]],axis=0)
+
+                #from the average baR vector, compute the expected eps+ value at (x,y)
+                All_Sats_2D_eps = np.append(All_Sats_2D_eps,np.array([[
                                                                         x,
                                                                         y,
                                                                         Cart_to_eps(np.array([[x,y,mean_temp_x,mean_temp_y]])),
-                                                                        sum_temp[2],
-                                                                        mean_temp_x,
-                                                                        mean_temp_y,
+                                                                        sum_temp[2]
                                                                         ]]),axis=0)
-    
-    #Now reduce the 2D data to 1D: perform radial averaging and get the gamma+ function
-    #get the radial axis from 0 to 1, this has size n+1. Will later take the number of intervals, 
-    #and will thus reduce the size of radial axis to n
-    if mode == 'linear':
-        rs = get_axis_lin(n)[n:2*n+1]
-    if mode == 'linear_cut': #To be implemented
-        rs = None
-        sys.exit('code not ready')
-    if mode == 'log':
-        rs = get_axis_log(n)[n:2*n+1]
-    
-    gamma_plus = np.zeros(n) #size=n
-    densities = np.zeros(n)
-    #Will store densities and rs seperately #R_density_profile = np.empty((0,n)) #stores[[Radial coord],densities]
-    
-    for i in range(n): # n = len(rs)-1. i.e. there is nothing beyond R_cut
-        #each i is a radial interval
+    #Now perform radial averaging and get the gamma+ function
+    n_radial = int(n+1) #partition the radial direction  into n intervals = n+1 points 
+    rs = np.linspace(0, R_cut, n_radial)#size=n+1, will discard the last data point
+    gamma_plus = np.zeros(n)#size=n
+    for i in range(len(rs)-1): #there is nothing beyond R_cut
         count=0
-        for elmt in Proj_Data:
-            # if in the first, second, third, radial interval(s)... and so on.
-            xyplane_dist = np.sqrt(elmt[0]**2+elmt[1]**2)
-            if (xyplane_dist >= rs[i] and xyplane_dist < rs[i+1]:
+        for elmt in All_Sats_2D_eps:
+            # if in the radial interval of 0 and 0.001(lets say e.g.).., and so on
+            if (np.sqrt(elmt[0]**2+elmt[1]**2) >= rs[i] and np.sqrt(elmt[0]**2+elmt[1]**2) < rs[i]+R_cut/(n_radial-1)):
+                count += elmt[3]
                 gamma_plus[i] += elmt[2]*elmt[3]
-                count += elmt[3] #adds up the total number density, in case it is 0, and cannot be used to average Gamma+
         if (count == 0):
+            #print(count)
+            #print(gamma_plus[i])
             gamma_plus[i]=0
         else: gamma_plus[i]=gamma_plus[i]/count
-        densities[i] = count
-                
-    rs = get_mid_points(rs)
-    
-    #R_density_profile = np.vstack((R_density_profile,densities))
-    #R_density_profile = np.vstack((R_density_profile,rs))
-                
+    rs = rs[0:-1]+(rs[0]+rs[1])/2 #so that the corresponding computed gamma_plus is at the center for each radial direction interval. Discard the last interval
+    #rint(len(rs),len(gamma_plus))
+    #rs=np.linspace(0, 1, 11)
+    #print(rs)
+    #rs = rs[0:-1]+(rs[0]+rs[1])/2
+    #print(rs)
     if save_2D == True:
-            if iteration_tracker == 0: #only save rs once for a setting
-                write_namedfile_at_path(outputpath, 'NA', rs,'rs')
-        write_file_at_path(outputpath, 'proj_data', Proj_Data,str(iteration_tracker))
-        write_file_at_path(outputpath, 'gamma_plus', gamma_plus,str(iteration_tracker))
-        write_file_at_path(outputpath, 'densities', densities,str(iteration_tracker))
+        write_file_at_path(outputpath, 'All_Sats_2D', All_Sats_2D,iteration_tracker)
+        write_file_at_path(outputpath, 'All_Sats_2D_eps', All_Sats_2D_eps,iteration_tracker)
+        write_file_at_path(outputpath, 'Gamma_plus', gamma_plus,iteration_tracker)
+        print('rank ',rank,': finished saving 2D, 2D_EPS, and Gamma_plus')
 
-def plot_gamma_plus(rank,n,smoothing_len,baR_0, outputpath,searchpath):
+def Plot_Gamma_Plus(rank,n,smoothing_len,baR_0, outputpath,searchpath):
     #smoothing length (multiples of 2): plotting one datapoint for every smoothing length worth of eps data (taking arithmetic average ), >=2
     #output path is where the figure folder is saved
     #searchpath is where all the gamma_plus data are stored
