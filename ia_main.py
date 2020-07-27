@@ -19,7 +19,7 @@ from execution_func import *
 ###############################################################################################################
 #
 def baR_func(x,y,z,global_r,global_theta,global_phi): 
-    return baR_0
+    return baR_0#+np.random.normal(0,0) #b/a ratio has an 
 
 def theta_func(x,y,z,global_r,global_theta,global_phi,std): 
     #### GAUSSIAN NOISE
@@ -35,7 +35,7 @@ def density_func(x,y,z,global_r,global_theta,global_phi): #NEED TO BE NORMALIZED
     if (global_r > 1): return 0
     else: 
         #return 1/(4*np.pi/3)
-        return 1/((global_r)*(1+global_r)**2)
+        return 1/((global_r*concentration)*(1+global_r*concentration)**2)
 
 ###############################################################################################################
 ########                     This block contains the core functions for this simulation                ########
@@ -186,7 +186,7 @@ def get_RA_data(save_2D,iteration_tracker,outputpath,mode,n,baR_0,phistd,thetast
         if (count == 0):
             gamma_plus[i]=0
         else: gamma_plus[i]=gamma_plus[i]/count
-        densities[i] = count/((rs[i+1]-rs[i])*2*np.pi*((rs[i+1]+rs[i])/2))
+        densities[i] = count/((rs[i+1]-rs[i])*2*np.pi*((rs[i+1]+rs[i])/2)) #number/area(i.e. the ring)
     rs = get_mid_points(rs)
     
     densities2D = np.vstack((Proj_Data[:,0],Proj_Data[:,1],Proj_Data[:,4]))
@@ -218,12 +218,15 @@ def get_RA_data(save_2D,iteration_tracker,outputpath,mode,n,baR_0,phistd,thetast
         write_file_at_path(outputpath, 'densities', densities,str(iteration_tracker)+mode+'mod')
         write_file_at_path(outputpath, 'densities2D', densities2D,str(iteration_tracker)+mode+'mod')
 
-baR_0 = 0.2
 n=64
+baR_0 = 0.2
+concentration = 20 #R_virial = Rs*c. since R_virial is usually chosen as the cut of limit for density profiles, we set it to 1.
+
 smr_run = np.pi/4
-outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/NFW log n %i baR_0 %1.2f smr %1.2f'%(n,0.2,smr_run)
+run_folder = 'NFW n %i baR_0 %1.2f smr %1.2f'%(n,0.2,rad_to_deg(smr_run))
 offset = 0
 size_per_rank = 3
+
 def run_rank_sing_cond(node_index,batch_num,offset): 
     if rank == node_index:
         if batch_num == 0:
@@ -232,6 +235,11 @@ def run_rank_sing_cond(node_index,batch_num,offset):
         if batch_num == 1:
             for i in range(size_per_rank):
                 get_RA_data(True,i+(size_per_rank*(rank-7)),outputpath,'log',n,baR_0,smr_run,smr_run)
+
+                
+outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output'
+outputpath = os.path.join(outputpath,run_folder)
+
 
 #how ever many slot you want to run:
 run_rank_sing_cond(0,0,offset)

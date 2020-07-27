@@ -1,8 +1,8 @@
 #This module has 
 #gamma_base_plot(smoothing_len,outputpath,mode):
-#error_bar_plot(smoothing_len,outputpath)
+#error_bar_plot(smoothing_len,outputpath) <- THIS IS PREFERRED
 
-def gamma_base_plot(smoothing_len,outputpath,mode):
+def gamma_base_plot(smoothing_len,run_folder,mode):
     #mode = 'scat' or 'line'
     #smoothing length reduces the length of the data by smoothing_len-fold. This is done by pari/triple/etc.-wise arthmetic averaging
     #will save the figures in outputpath/figures
@@ -18,6 +18,9 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
     import matplotlib.pyplot as plt
     import execution_func as ef
     import re
+    
+    outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output'
+    outputpath = os.path.join(outputpath,run_folder)
     
     searchpath = os.path.join(outputpath,'gamma_plus')
     scat = False
@@ -86,7 +89,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder +' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
@@ -94,9 +97,9 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
         if scat == True:
-            fig.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smoothing = %i scatplot log'%smoothing_len), bbox_inches = 'tight')
+            fig.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smth %i scatplot log'%smoothing_len), bbox_inches = 'tight')
         if scat == False:
-            fig.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smoothing = %i lineplot log'%smoothing_len), bbox_inches = 'tight')
+            fig.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smth %i lineplot log'%smoothing_len), bbox_inches = 'tight')
 
     #LINEAR PLOT:
     if LINEARSIMFLAG == True:
@@ -119,7 +122,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder + ' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
@@ -127,9 +130,9 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
         if scat == True:
-            fig2.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smoothing = %i scatplot linear'%smoothing_len), bbox_inches = 'tight')  
+            fig2.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smth %i scatplot linear'%smoothing_len), bbox_inches = 'tight')  
         if scat == False:
-            fig2.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smoothing = %i lineplot linear'%smoothing_len), bbox_inches = 'tight')
+            fig2.savefig(os.path.join(imagesavepath, 'Gamma '+str(n)+' smth %i lineplot linear'%smoothing_len), bbox_inches = 'tight')
 
     #Hybrid PLOT:  
     if HYBRIDFLAG == True:
@@ -147,7 +150,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder+'\n'+'red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
@@ -155,9 +158,9 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
         if scat == True:
-            fig3.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smoothing = %i scatplot log'%smoothing_len), bbox_inches = 'tight')
+            fig3.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smth %i scatplot log'%smoothing_len), bbox_inches = 'tight')
         if scat == False:
-            fig3.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smoothing = %i lineplot log'%smoothing_len), bbox_inches = 'tight')
+            fig3.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smth %i lineplot log'%smoothing_len), bbox_inches = 'tight')
 
         #HybridLOG PLOT:
         fig4 = plt.figure(figsize=(9,6))
@@ -172,7 +175,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder+'\n'+'red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
@@ -180,9 +183,9 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
         if scat == True:
-            fig4.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smoothing = %i scatplot linear'%smoothing_len), bbox_inches = 'tight')  
+            fig4.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smth %i scatplot linear'%smoothing_len), bbox_inches = 'tight')  
         if scat == False:
-            fig4.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smoothing = %i lineplot linear'%smoothing_len), bbox_inches = 'tight')
+            fig4.savefig(os.path.join(imagesavepath, 'hybrid Gamma '+str(n)+' smth %i lineplot linear'%smoothing_len), bbox_inches = 'tight')
     
     
     
@@ -198,7 +201,7 @@ def gamma_base_plot(smoothing_len,outputpath,mode):
 #It takes the two lines that signifies the 1 and 2 th STD upper&lower bounds
 #and return these 4 lines in one 2-D file that contain both lists.
 
-def error_bar_plot(smoothing_len,outputpath): 
+def error_bar_plot(smoothing_len,run_folder): 
     #outputpath is where the figure folder is saved
     #searchpath is where all the gamma_plus data are stored
     #will save a file, and a plot     
@@ -217,6 +220,9 @@ def error_bar_plot(smoothing_len,outputpath):
     import matplotlib.pyplot as plt
     import execution_func as ef
     import re
+    
+    outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output'
+    outputpath = os.path.join(outputpath,run_folder)
     
     searchpath = os.path.join(outputpath,'gamma_plus')
     path_bar_search = re.search('baR_0 ([+-]?([0-9]*[.])?[0-9]+)', outputpath, re.IGNORECASE)
@@ -277,7 +283,7 @@ def error_bar_plot(smoothing_len,outputpath):
         #print(complete_GamPls)
         error_GamPls_log = np.vstack((error_GamPls_log,rs_log)) #attach the smoothed x coordinate
         #save in the figures folder
-        ef.write_file_at_path(outputpath, 'figures',error_GamPls_log,'STD smoothing=%i log'%smoothing_len)
+        ef.write_file_at_path(outputpath, 'figures',error_GamPls_log,'STD smth %i log'%smoothing_len)
 
         #plot:
         fig1 = plt.figure(figsize=(9,6))
@@ -291,16 +297,16 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder+' smooth=%i'% int(smoothing_len))
         plt.xlim(0.01,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
-        fig1.savefig(os.path.join(imagesavepath, 'STD Gamma '+str(n)+' smoothing = %i log'%smoothing_len), bbox_inches = 'tight')
+        fig1.savefig(os.path.join(imagesavepath, 'STD Gamma '+str(n)+' smth %i log'%smoothing_len), bbox_inches = 'tight')
 
-    #LOINEAR PLOT:
+    #LINEAR PLOT:
     if LINEARSIMFLAG == True:
         rs_linear = np.array([sum(rs_presmoothlinear[i:i+smoothing_len])/smoothing_len for i in range(0,len(rs_presmoothlinear),smoothing_len)])   
         #get all the log files
@@ -317,7 +323,7 @@ def error_bar_plot(smoothing_len,outputpath):
         #print(complete_GamPls)
         error_GamPls_linear = np.vstack((error_GamPls_linear,rs_linear)) #attach the smoothed x coordinate
         #save in the figures folder
-        ef.write_file_at_path(outputpath, 'figures',error_GamPls_linear,'STD smoothing=%i linear'%smoothing_len)
+        ef.write_file_at_path(outputpath, 'figures',error_GamPls_linear,'STD smth %i linear'%smoothing_len)
 
         #plot:
         fig2 = plt.figure(figsize=(9,6))
@@ -330,62 +336,56 @@ def error_bar_plot(smoothing_len,outputpath):
         plt.xlabel('r')
         plt.ylabel('gamma +')
         plt.grid(b=True,which='both')
-        plt.title('n='+str(n)+' smooth=%i'% int(smoothing_len))
+        plt.title(run_folder+' smooth=%i'% int(smoothing_len))
         plt.xlim(0,1)
         plt.ylim(0,1)
         plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
-        fig2.savefig(os.path.join(imagesavepath, 'STD Gamma '+str(n)+' smoothing = %i linear'%smoothing_len), bbox_inches = 'tight')            
+        fig2.savefig(os.path.join(imagesavepath, 'STD Gamma '+str(n)+' smth %i linear'%smoothing_len), bbox_inches = 'tight')            
             
     #Hybrid PLOT:  
     if HYBRIDFLAG == True:
     #HybridLOG PLOT:
-        fig3 = plt.figure(figsize=(9,6))
+        f, (ax1,ax2) = plt.subplots(1,2,figsize=(8,10))
         for g in gamma_log:
-            plt.scatter(rs_log,g,c='r',s=0.75,marker='o')
+            ax1.scatter(rs_log,g,c='r',s=0.75,marker='o')
         for g in gamma_linear:
-            plt.scatter(rs_linear,g,c='b',s=0.75,marker='o')
-        plt.fill_between(rs_log,error_GamPls_log[2],error_GamPls_log[3],alpha = 0.4,label='log_2nd STD')    
-        plt.fill_between(rs_log,error_GamPls_log[0],error_GamPls_log[1],alpha = 0.4,label='log_1st STD')
-        plt.fill_between(rs_linear,error_GamPls_linear[2],error_GamPls_linear[3],alpha = 0.4,label='linear_2nd STD')    
-        plt.fill_between(rs_linear,error_GamPls_linear[0],error_GamPls_linear[1],alpha = 0.4,label='linear_1st STD')
-        plt.plot(rs_log,asymp,"--",label=("asymptotic value %1.3f, b/a_0 = %1.2f" %(asymp_value, baR_0)))
-        plt.plot(rs_log,y_0,label='y=0')
-        plt.xscale('log')
-        plt.xlabel('r')
-        plt.ylabel('gamma +')
-        plt.grid(b=True,which='both')
-        plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
-        plt.xlim(0.01,1)
-        plt.ylim(0,1)
-        plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
-        imagesavepath = os.path.join(outputpath, 'figures')
-        if not os.path.exists(imagesavepath):
-            os.makedirs(imagesavepath)
-        fig3.savefig(os.path.join(imagesavepath, 'hybrid STD Gamma '+str(n)+' smoothing = %i log'%smoothing_len), bbox_inches = 'tight')
-
+            ax1.scatter(rs_linear,g,c='b',s=0.75,marker='o')
+        ax1.fill_between(rs_log,error_GamPls_log[2],error_GamPls_log[3],alpha = 0.2,label='log_2nd STD')    
+        ax1.fill_between(rs_log,error_GamPls_log[0],error_GamPls_log[1],alpha = 0.6,label='log_1st STD')
+        ax1.fill_between(rs_linear,error_GamPls_linear[2],error_GamPls_linear[3],alpha = 0.2,label='linear_2nd STD')    
+        ax1.fill_between(rs_linear,error_GamPls_linear[0],error_GamPls_linear[1],alpha = 0.6,label='linear_1st STD')
+        ax1.plot(rs_log,asymp,"--",label=("asymptotic value %1.3f, b/a_0 = %1.2f" %(asymp_value, baR_0)))
+        ax1.plot(rs_log,y_0,label='y=0')
+        ax1.set_xscale('log')
+        ax1.set_xlabel('r')
+        ax1.set_ylabel('gamma +')
+        ax1.grid(b=True,which='both')
+        ax1.set_xlim(0.01,1)
+        ax1.set_ylim(0,0.4)
+        #ax1.legend(bbox_to_anchor=(0.5, 0.1), loc='lower left', ncol=1)
         #HybridLINEAR PLOT:
-        fig4 = plt.figure(figsize=(9,6))
         for g in gamma_log:
-            plt.scatter(rs_log,g,c='r',s=0.75,marker='o')
+            ax2.scatter(rs_log,g,c='r',s=0.75,marker='o')
         for g in gamma_linear:
-            plt.scatter(rs_linear,g,c='b',s=0.75,marker='o')
-        plt.fill_between(rs_log,error_GamPls_log[2],error_GamPls_log[3],alpha = 0.4,label='log_2nd STD')    
-        plt.fill_between(rs_log,error_GamPls_log[0],error_GamPls_log[1],alpha = 0.4,label='log_1st STD')
-        plt.fill_between(rs_linear,error_GamPls_linear[2],error_GamPls_linear[3],alpha = 0.4,label='linear_2nd STD')    
-        plt.fill_between(rs_linear,error_GamPls_linear[0],error_GamPls_linear[1],alpha = 0.4,label='linear_1st STD')
-        plt.plot(rs_linear,asymp,"--",label=("asymptotic value %1.3f, b/a_0 = %1.2f" %(asymp_value, baR_0)))
-        plt.plot(rs_linear,y_0,label='y=0')
-        plt.xlabel('r')
-        plt.ylabel('gamma +')
-        plt.grid(b=True,which='both')
-        plt.title('red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
-        plt.xlim(0,1)
-        plt.ylim(0,1)
-        plt.legend(bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
+            ax2.scatter(rs_linear,g,c='b',s=0.75,marker='o')
+        ax2.fill_between(rs_log,error_GamPls_log[2],error_GamPls_log[3],alpha = 0.2,label='log_2nd STD')    
+        ax2.fill_between(rs_log,error_GamPls_log[0],error_GamPls_log[1],alpha = 0.6,label='log_1st STD')
+        ax2.fill_between(rs_linear,error_GamPls_linear[2],error_GamPls_linear[3],alpha = 0.2,label='linear_2nd STD')    
+        ax2.fill_between(rs_linear,error_GamPls_linear[0],error_GamPls_linear[1],alpha = 0.6,label='linear_1st STD')
+        ax2.plot(rs_linear,asymp,"--",label=("asymptotic value %1.3f, b/a_0 = %1.2f" %(asymp_value, baR_0)))
+        ax2.plot(rs_linear,y_0,label='y=0')
+        ax2.set_xlabel('r')
+        ax2.set_ylabel('gamma +')
+        ax2.grid(b=True,which='both')
+        ax2.set_xlim(0,1)
+        ax2.set_ylim(0,0.4)
+        #ax2.legend(bbox_to_anchor=(0.5, 0.1), loc='lower left', ncol=1)
+        
+        f.suptitle(run_folder+'\n'+'red:log sim; blue:linear sim\n'+'n='+str(n)+' smooth=%i'% int(smoothing_len))
         imagesavepath = os.path.join(outputpath, 'figures')
         if not os.path.exists(imagesavepath):
             os.makedirs(imagesavepath)
-        fig4.savefig(os.path.join(imagesavepath, 'hybrid STD Gamma '+str(n)+' smoothing = %i linear'%smoothing_len), bbox_inches = 'tight')  
+        f.savefig(os.path.join(imagesavepath, 'hybrid STD Gamma '+str(n)+' smth %i '%smoothing_len), bbox_inches = 'tight')  
