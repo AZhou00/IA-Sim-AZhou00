@@ -216,9 +216,9 @@ def error_bar_plot(smoothing_len,run_folder,SCATFLAG):
         for g in density_linear:
             ax2.scatter(error_density_linear[4],g,c='b',s=0.75,marker='o')
     ax2.fill_between(error_density_log[4],error_density_log[2],error_density_log[3],alpha = 0.3,label='log_2nd STD')    
-    ax2.fill_between(error_density_log[4],error_density_log[0],error_density_log[1],alpha = 0.4,label='log_1st STD')
+    ax2.fill_between(error_density_log[4],error_density_log[0],error_density_log[1],alpha = 0.6,label='log_1st STD')
     ax2.fill_between(error_density_linear[4],error_density_linear[2],error_density_linear[3],alpha = 0.3,label='linear_2nd STD')    
-    ax2.fill_between(error_density_linear[4],error_density_linear[0],error_density_linear[1],alpha = 0.4,label='linear_1st STD')
+    ax2.fill_between(error_density_linear[4],error_density_linear[0],error_density_linear[1],alpha = 0.6,label='linear_1st STD')
     ax2.plot(error_density_log[4][0:-1],constant_rho,label='constant density')
     ax2.plot(error_density_log[4][0:-1],c5,label='c5')
     ax2.plot(error_density_log[4][0:-1],c10,label='c10')
