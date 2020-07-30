@@ -171,14 +171,12 @@ def baR_func(x,y,z,global_r,global_theta,global_phi):
 def theta_func(x,y,z,global_r,global_theta,global_phi,a1,a2): 
     #### GAUSSIAN NOISE
     #return global_theta+np.random.normal(0,a2) #(center, std)
-    #return global_theta+np.random.normal(0,a1*global_r+a2) #linear model
-    return global_theta+np.random.normal(0,a2+(np.pi/2)*(1-np.exp(-1*global_r/a1))) #exponential model, a2 in radians, a1 is the decay radius
+    return global_theta+np.random.normal(0,a1*global_r+a2) #(center, std)
 
 def phi_func(x,y,z,global_r,global_theta,global_phi,a1,a2): 
     #### GAUSSIAN NOISE
     #return global_theta+np.random.normal(0,a2) #(center, std)
-    #return global_phi+np.random.normal(0,a1*global_r+a2) #linear model
-    return global_phi+np.random.normal(0,a2+(np.pi/2)*(1-np.exp(-1*global_r/a1))) #exponential model, a2 in radians, a1 is the decay radius
+    return global_phi+np.random.normal(0,a1*global_r+a2)
 
 def density_func(x,y,z,global_r,global_theta,global_phi,std): #NEED TO BE NORMALIZED
     # this gives the Fraction NUMBER of gals expected in a box of size dV, approximated at (x,y,z)
@@ -192,7 +190,7 @@ def density_func(x,y,z,global_r,global_theta,global_phi,std): #NEED TO BE NORMAL
 n=32
 baR_0 = 0.3
 concentration = 20 #R_virial = Rs*c. since R_virial is usually chosen as the cut of limit for density profiles, we set it to 1.
-a1s = np.logspace(-2,0,10)
+a1s = np.linspace(0,np.pi/2,10)
 a2s = np.linspace(0,np.pi/2,10)
 #smr_slope_run = 0#np.pi/8 #radians/normalized_distance
 #smr_intercept_run = np.pi/8 #radians
@@ -201,7 +199,7 @@ offset = 0
 size_per_rank = 10
 for smr_slope_run in a1s:
     for smr_intercept_run in a2s:
-        run_folder = 'n %i c %i rhostd %1.2f baR_0 %1.2f decay_r %1.2f itcp %1.2f'%(n,concentration,density_std,baR_0,smr_slope_run,rad_to_deg(smr_intercept_run))
+        run_folder = 'n %i c %i rhostd %1.2f baR_0 %1.2f slp %1.2f itcp %1.2f'%(n,concentration,density_std,baR_0,rad_to_deg(smr_slope_run),rad_to_deg(smr_intercept_run))
         print('starting rank',rank,' on a new condition')
 
         def run_rank_sing_cond(node_index,batch_num,offset): 
@@ -215,7 +213,7 @@ for smr_slope_run in a1s:
                         get_RA_data(True,(rank+(i+size_per_rank-1)*7),outputpath,'log',n,baR_0,smr_slope_run,smr_intercept_run,density_std)
                         print('batch2 rank'+str(rank)+': task finished '+str((rank+(i+size_per_rank-1)*7))+'out of total'+str(14*size_per_rank-1))
 
-        outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/Exponential Smearing'
+        outputpath = '/home/azhou/IA-Sim-AZhou00/IA_Numeric_Output/Linear Smearing'
         outputpath = os.path.join(outputpath,run_folder)
         #get_RA_data(True,1,outputpath,'linear',n,baR_0,smr_run,smr_run)
 
@@ -227,8 +225,7 @@ for smr_slope_run in a1s:
         run_rank_sing_cond(4,0,offset)
         run_rank_sing_cond(5,0,offset)
         run_rank_sing_cond(6,0,offset)
-        time.sleep(4) #this gives time for the previous threads to create directories, etcs.
-        #Note this time difference is repeated every loop
+        time.sleep(5) #this gives time for the previous threads to create directories, etcs.
         run_rank_sing_cond(7,1,offset)
         run_rank_sing_cond(8,1,offset)
         run_rank_sing_cond(9,1,offset)
